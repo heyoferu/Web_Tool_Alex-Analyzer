@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Léxico</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+</head>
+<body>
+    <div class="Titulo">
+        <h1>Analizador Lexico</h1>
+    </div>
+    <div class="container_main">
+        <div class="sub_container">
+            <form method="POST" action="/">
+                <textarea name="code" id="code" rows="10" cols="50" placeholder="Escribe tu código aquí..."></textarea>
+                <br>
+                <button class="analizar-boton" type="submit">Analizar</button>
+            </form>
+        </div>
+        <div class="contenedor_tabla">
+            <table>
+                {% if tokens %}
+                    <tr>
+                        <th>Caracteres</th>
+                        <th>Símbolos</th>
+                    </tr>
+                    {% for caracter, simbolo in tokens %}
+                    <tr>
+                        <td>{{ caracter }}</td>
+                        <td>{{ simbolo }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr><td colspan="2">No se encontraron tokens</td></tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+    <script>
+        document.getElementById('file').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('code').value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+    </script>
+</body>
+</html>
