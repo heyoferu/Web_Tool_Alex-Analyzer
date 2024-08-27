@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador Léxico</title>
-    <link rel="stylesheet" href="static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <div class="Titulo">
@@ -19,22 +19,35 @@
             </form>
         </div>
         <div class="contenedor_tabla">
+
+            
+            {% if input %}    
+            <textarea readonly id="txt"  class="txt" rows="11">{{ input }}</textarea>
+            {% endif %}
+            
+            
             <table>
                 {% if tokens %}
                     <tr>
                         <th>Caracteres</th>
                         <th>Símbolos</th>
+                        <th>Linea</th>
                     </tr>
-                    {% for caracter, simbolo in tokens %}
+                    {% for caracter, simbolo, linea in tokens %}
                     <tr>
                         <td>{{ caracter }}</td>
                         <td>{{ simbolo }}</td>
+                        <td>{{ linea }}</td>
                     </tr>
                     {% endfor %}
                 {% else %}
                 <tr><td colspan="2">No se encontraron tokens</td></tr>
                 {% endif %}
             </table>
+            
+            {% if tkeys %}
+            <p class="tokensres">palabras reservadas totales: {{ tkeys }}</p>
+            {% endif %}
         </div>
     </div>
     <script>
