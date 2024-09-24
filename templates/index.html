@@ -7,25 +7,32 @@
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <div class="Titulo">
-        <h1>Analizador Lexico</h1>
+    <div class="title">
+        <h1>Analizador Lexico-Sintactico</h1>
     </div>
-    <div class="container_main">
-        <div class="sub_container">
+    <div class="main">
+
+        <div class="input_code">
             <form method="POST" action="/">
                 <textarea name="code" id="code" rows="10" cols="50" placeholder="Escribe tu código aquí..."></textarea>
                 <br>
                 <button class="analizar-boton" type="submit">Analizar</button>
             </form>
         </div>
-        <div class="contenedor_tabla">
+
+        <div class="output_code">
 
             
             {% if input %}    
             <textarea readonly id="txt"  class="txt" rows="11">{{ input }}</textarea>
+            {% if error_sena %}
+                <p class="asena_error"> {{ error_sena }} </p>
+            {% else %}
+                <p class="asena_success">No hay errores de sintaxis</p>
+            {% endif %}
             {% endif %}
             
-            
+
             <table>
                 {% if tokens %}
                     <tr>
@@ -50,17 +57,6 @@
             {% endif %}
         </div>
     </div>
-    <script>
-        document.getElementById('file').addEventListener('change', function(e) {
-            var file = e.target.files[0];
-            if (file) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('code').value = e.target.result;
-                };
-                reader.readAsText(file);
-            }
-        });
-    </script>
+    <script src="/static/js/script.js" defer></script>
 </body>
 </html>
