@@ -2,3 +2,6 @@
 .venv/
 .prjvenv/
 .vscode/
+__pycache__/
+parser.out
+parsetab.py
