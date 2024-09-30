@@ -9,13 +9,10 @@ def index():
         code = request.form.get('code', '')
 
         analizador = Alex.AnalizadorLexico()
-        
-        resultado = analizador.analizar(code)
-
         asena = Alex.AnalizadorSintactico(analizador)
         sintaxis = asena.analizar(code)
 
-        return render_template('index.html', tokens=resultado, tkeys=analizador.rc, input=code, error_sena = sintaxis)
+        return render_template('index.html', tokens=asena.lexres, tkeys=asena.reserv_c, input=code, error_sena = sintaxis)
     
     return render_template('index.html', tokens=None, error_sena = None)
 
