@@ -3,44 +3,61 @@ import ply.yacc as yacc
 
 class AnalizadorLexico:
     # Tokens reservados
-    _reservada = ('IF', 'ELSE', 'WHILE', 'FOR', 'PRINT',
-                  'RETURN', 'BREAK', 'TRUE', 'FALSE', 'INT')
-    tokens = _reservada + ('identificador', 'suma', 'PARIZQ', 'PARDER', 'LLAVEIZQ',
-                            'LLAVEDER','numero', 'punto','cadena', 'pcoma', 'igual', 'lessthan')
+    _reservada = (
+        'FOR',
+        'INT',
+        'SYSTEM',
+        'OUT',
+        'PRINTLN'
+        )
+    tokens = _reservada + (
+        'ID', 
+        'PLUS',
+        'L_PAR',
+        'R_PAR', 
+        'L_BRACKET',
+        'R_BRACKET',
+        'NUMBER', 
+        'DOT',
+        'STRING', 
+        'SEMICOLON', 
+        'ASSIGN', 
+        'LESSTHAN'
+    )
 
     def __init__(self):
         self._resultado_lexema = []
         self.lexer = lex.lex(module=self)
         self.rc = 0
 
-    t_PARIZQ = r'\('
-    t_PARDER = r'\)'
-    t_LLAVEIZQ = r'\{'
-    t_LLAVEDER = r'\}'
-    t_punto = r'\.'
-    t_suma = r'\+'
-    t_igual = r'='
-    t_lessthan = r'<='
-    t_pcoma = r';'
-    t_cadena = r'\".*?\"'
-    t_identificador = r'[a-zA-Z_][a-zA-Z_0-9]*'
-    t_numero = r'\d+'
-
-
-    def t_IF(self, t):
-        r'if'
-        return t
-
-    def t_ELSE(self, t):
-        r'else'
-        return t
-
-    def t_WHILE(self, t):
-        r'while'
-        return t
+    t_L_PAR = r'\('
+    t_R_PAR = r'\)'
+    t_L_BRACKET = r'\{'
+    t_R_BRACKET = r'\}'
+    t_DOT = r'\.'
+    t_PLUS = r'\+'
+    t_ASSIGN = r'='
+    t_LESSTHAN = r'<='
+    t_SEMICOLON = r';'
+    #t_STRING = r'\".*?\"'
+    t_STRING = r'\"([^\\\n]|(\\.))*?\"'  # Captura correctamente cadenas con escapado
+    t_ID = r'[a-zA-Z_][a-zA-Z_0-9]*'
+    t_NUMBER = r'\d+'
 
     def t_FOR(self, t):
-        r'\bfor\b'
+        r'for'
+        return t
+
+    def t_SYSTEM(self, t):
+        r'\bSystem\b'
+        return t
+
+    def t_OUT(self, t):
+        r'\bout\b'
+        return t
+
+    def t_PRINTLN(self, t):
+        r'\bprintln\b'
         return t
 
     def t_INT(self, t):
@@ -52,10 +69,9 @@ class AnalizadorLexico:
         t.lexer.lineno += len(t.value)
 
     def t_error(self, t):
-        # self._resultado_lexema.append((f"Token no Valido",t.value, t.lineno))
         t.lexer.skip(1)
 
-    t_ignore = ' \t'
+    t_ignore = '\r\t'
 
     def analizar(self, data):
         self._resultado_lexema.clear()  # Limpiar resultados 
@@ -64,7 +80,6 @@ class AnalizadorLexico:
         
         while True:
             tok = analizador.token()
-            print(tok)
             if not tok:
                 break
             if tok.type in self._reservada:
@@ -79,48 +94,88 @@ class AnalizadorLexico:
 class AnalizadorSintactico:
     def __init__(self, analizador_lexico):
         self.analizador_lexico = analizador_lexico
+        self.lexres = None
+        self.reserv_c = analizador_lexico.rc
         self.tokens = analizador_lexico.tokens 
         self.parser = yacc.yacc(module=self)
-        self.resultado = []
+        self.errormsg = []
 
-    def p_inicio(self, p):
-        '''inicio : estructura_for'''
-        print("Analisis exitoso del for")
+
+    ### statement_for
+    def p_statement_for(self, p):
+        '''statement_for : FOR expr codeblock'''
     
-    def p_estructura_for(self, p):
-        '''estructura_for : FOR PARIZQ declaracion_inicial pcoma condicion pcoma actualizacion PARDER bloque'''
+    def p_statement_for_error(self, p):
+        '''statement_for : FOR error codeblock'''
+        self.errormsg.append("Error de sintaxis en la declaración 'for'. Se esperaba una expresión válida.")
 
-    def p_declaracion_inicial(self, p):
-        '''declaracion_inicial : tipo identificador igual numero'''
-        p[0] = ("Declaración inicial", p[2], p[4])
+    ### (expr)
+    def p_expr(self, p):
+        '''expr : L_PAR var_init SEMICOLON var_upto SEMICOLON inc R_PAR'''
 
-    
-    def p_tipo(self, p):
-        '''tipo : INT'''
-    
-    def p_condicion(self, p):
-        '''condicion : identificador lessthan numero'''
-        p[0] = ("Condición", p[1], p[3])
+    def p_expr_assign_error(self, p):
+        '''expr : L_PAR error SEMICOLON var_upto SEMICOLON inc R_PAR'''
+        self.errormsg.append("Error de sintaxis en la expresión del bucle 'for'. Se esperaba una inicialización válida.")
 
-    def p_actualizacion(self, p):
-        '''actualizacion : identificador suma suma'''
-        p[0] = ("Actualización", p[1])
+    def p_expr_a_error(self, p):
+        '''expr : L_PAR var_init SEMICOLON error SEMICOLON inc R_PAR'''
+        self.errormsg.append("Error de sintaxis en la condición del bucle 'for'. Se esperaba una condición válida.")
+        
+    ### int i = 1
+    def p_var_init(self, p):
+        '''var_init : INT ID ASSIGN NUMBER'''
 
-    def p_bloque(self, p):
-        '''bloque : LLAVEIZQ instruccion LLAVEDER'''
-        p[0] = "Bloque de código"
-    
-    def p_instruccion(self, p):
-        '''instruccion : identificador punto identificador punto identificador PARIZQ cadena suma identificador PARDER pcoma'''
-        p[0] = "Instrucción de impresión"
+    def p_var_init_error(self, p):
+        '''var_init : INT error ASSIGN NUMBER'''
+        self.errormsg.append("Error de sintaxis en la inicialización de la variable. Se esperaba un identificador válido.")
+
+    ### i <= 10
+    def p_var_upto(self, p):
+        '''var_upto : ID LESSTHAN NUMBER'''
+
+    def p_var_upto_error(self, p):
+        '''var_upto : ID error NUMBER'''
+        self.errormsg.append("Error de sintaxis en la condición del bucle 'for'. Se esperaba un operador de comparación válido.")
+
+    ### i++
+    def p_inc(self, p):
+        '''inc : ID PLUS PLUS'''
+
+    def p_inc_error(self, p):
+        '''inc : ID error'''
+        self.errormsg.append("Error de sintaxis en la expresión de incremento. Se esperaba '++' o un incremento válido.")
+
+    ### {code}
+    def p_codeblock(self, p):
+        '''codeblock : L_BRACKET code R_BRACKET'''
+
+    def p_codeblock_error(self, p):
+        '''codeblock : L_BRACKET error R_BRACKET'''
+        self.errormsg.append("Error de sintaxis en el bloque de código.")
+
+    ### System.Out.Println("cadena")
+    def p_code(self, p):
+        '''code : SYSTEM DOT OUT DOT PRINTLN L_PAR args R_PAR SEMICOLON'''
+
+    def p_code_error(self, p):
+        '''code : SYSTEM DOT OUT DOT PRINTLN L_PAR error R_PAR SEMICOLON'''
+        self.errormsg.append("Error de sintaxis en la declaración 'System.out.println'. Se esperaba argumentos válidos.")
+
+    def p_args(self, p):
+        '''args : STRING PLUS ID'''
+
+    def p_args_error(self, p):
+        '''args : STRING error ID'''
+        self.errormsg.append("Error de sintaxis en los argumentos. Se esperaba un argumento válido.")
 
     def p_error(self, p):
         if p:
-            self.resultado = f"Error de sintaxis en '{p.value}' en la línea {p.lineno}"
-            
+            self.errormsg.append(f"Error en la linea {p.lineno} y posición {p.lexpos}. Carácter no valido: {p.value}")
         else:
-            print("Error de sintaxis en la entrada")
-
+            self.errormsg.append("Error de sintaxis en la entrada")
+        
     def analizar(self, data):
         self.parser.parse(data, lexer=self.analizador_lexico.lexer)
-        return self.resultado
+        self.lexres = self.analizador_lexico.analizar(data)
+        self.reserv_c = self.analizador_lexico.rc
+        return self.errormsg 
