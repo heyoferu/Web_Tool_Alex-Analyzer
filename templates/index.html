@@ -26,7 +26,9 @@
             {% if input %}    
             <textarea readonly id="txt"  class="txt" rows="11">{{ input }}</textarea>
             {% if error_sena %}
-                <p class="asena_error"> {{ error_sena }} </p>
+                {% for error in error_sena %}
+                    <p class="asena_error"> {{ error }} </p>
+                {% endfor %}
             {% else %}
                 <p class="asena_success">No hay errores de sintaxis</p>
             {% endif %}
