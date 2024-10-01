@@ -26,7 +26,8 @@ class AnalizadorLexico:
         'STRING', 
         'SEMICOLON', 
         'ASSIGN', 
-        'LESSTHAN'
+        'LESSTHAN',
+        'COMMA'
     )
 
     def __init__(self):
@@ -45,6 +46,7 @@ class AnalizadorLexico:
     t_STRING = r'\".*?\"'
     t_ID = r'[a-zA-Z_][a-zA-Z_0-9]*'
     t_NUMBER = r'\d+'
+    t_COMMA = r'\,'
 
     def t_FOR(self, t):
         r'for'
@@ -120,74 +122,32 @@ class AnalizadorSintactico:
         self.parser = yacc.yacc(module=self)
         self.errormsg = []
 
+    ### program grammar
+    ### program statement
+    def p_programa_statement(self, p):
+        '''programa : PROGRAMA def L_PAR R_PAR L_BRACKET code R_BRACKET'''
 
-    ### statement_for
-    def p_statement_for(self, p):
-        '''statement_for : FOR expr codeblock'''
-    
-    def p_statement_for_error(self, p):
-        '''statement_for : FOR error codeblock'''
-        self.errormsg.append("Error de sintaxis en la declaración 'for'. Se esperaba una expresión válida.")
+    def p_def(self, p):
+        '''def : ID '''
 
-    ### (expr)
-    def p_expr(self, p):
-        '''expr : L_PAR var_init SEMICOLON var_upto SEMICOLON inc R_PAR'''
-
-    def p_expr_assign_error(self, p):
-        '''expr : L_PAR error SEMICOLON var_upto SEMICOLON inc R_PAR'''
-        self.errormsg.append("Error de sintaxis en la expresión del bucle 'for'. Se esperaba una inicialización válida.")
-
-    def p_expr_a_error(self, p):
-        '''expr : L_PAR var_init SEMICOLON error SEMICOLON inc R_PAR'''
-        self.errormsg.append("Error de sintaxis en la condición del bucle 'for'. Se esperaba una condición válida.")
-        
-    ### int i = 1
-    def p_var_init(self, p):
-        '''var_init : INT ID ASSIGN NUMBER'''
-
-    def p_var_init_error(self, p):
-        '''var_init : INT error ASSIGN NUMBER'''
-        self.errormsg.append("Error de sintaxis en la inicialización de la variable. Se esperaba un identificador válido.")
-
-    ### i <= 10
-    def p_var_upto(self, p):
-        '''var_upto : ID LESSTHAN NUMBER'''
-
-    def p_var_upto_error(self, p):
-        '''var_upto : ID error NUMBER'''
-        self.errormsg.append("Error de sintaxis en la condición del bucle 'for'. Se esperaba un operador de comparación válido.")
-
-    ### i++
-    def p_inc(self, p):
-        '''inc : ID PLUS PLUS'''
-
-    def p_inc_error(self, p):
-        '''inc : ID error'''
-        self.errormsg.append("Error de sintaxis en la expresión de incremento. Se esperaba '++' o un incremento válido.")
-
-    ### {code}
-    def p_codeblock(self, p):
-        '''codeblock : L_BRACKET code R_BRACKET'''
-
-    def p_codeblock_error(self, p):
-        '''codeblock : L_BRACKET error R_BRACKET'''
-        self.errormsg.append("Error de sintaxis en el bloque de código.")
-
-    ### System.Out.Println("cadena")
     def p_code(self, p):
-        '''code : SYSTEM DOT OUT DOT PRINTLN L_PAR args R_PAR SEMICOLON'''
+        '''code : expr'''
+    
+    def p_expr(self, p):
+        '''expr : INT ids SEMICOLON
+                | READ ID SEMICOLON 
+                | op
+                | PRINTF L_PAR STRING R_PAR
+                | END SEMICOLON
+                | expr expr'''
 
-    def p_code_error(self, p):
-        '''code : SYSTEM DOT OUT DOT PRINTLN L_PAR error R_PAR SEMICOLON'''
-        self.errormsg.append("Error de sintaxis en la declaración 'System.out.println'. Se esperaba argumentos válidos.")
+    def p_op(self, p):
+        '''op : ID ASSIGN ID PLUS ID SEMICOLON'''
 
-    def p_args(self, p):
-        '''args : STRING PLUS ID'''
-
-    def p_args_error(self, p):
-        '''args : STRING error ID'''
-        self.errormsg.append("Error de sintaxis en los argumentos. Se esperaba un argumento válido.")
-
+    def p_ids(self, p):
+        '''ids : ID 
+               | ids COMMA ids'''    
+               
     def p_error(self, p):
         if p:
             self.errormsg.append(f"Error en la linea {p.lineno} y posición {p.lexpos}. Carácter no valido: {p.value}")
