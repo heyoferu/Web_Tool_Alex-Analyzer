@@ -8,7 +8,11 @@ class AnalizadorLexico:
         'INT',
         'SYSTEM',
         'OUT',
-        'PRINTLN'
+        'PRINTLN',
+        'PROGRAMA',
+        'READ',
+        'PRINTF',
+        'END'
         )
     tokens = _reservada + (
         'ID', 
@@ -28,7 +32,6 @@ class AnalizadorLexico:
     def __init__(self):
         self._resultado_lexema = []
         self.lexer = lex.lex(module=self)
-        self.rc = 0
 
     t_L_PAR = r'\('
     t_R_PAR = r'\)'
@@ -39,8 +42,7 @@ class AnalizadorLexico:
     t_ASSIGN = r'='
     t_LESSTHAN = r'<='
     t_SEMICOLON = r';'
-    #t_STRING = r'\".*?\"'
-    t_STRING = r'\"([^\\\n]|(\\.))*?\"'  # Captura correctamente cadenas con escapado
+    t_STRING = r'\".*?\"'
     t_ID = r'[a-zA-Z_][a-zA-Z_0-9]*'
     t_NUMBER = r'\d+'
 
@@ -64,6 +66,22 @@ class AnalizadorLexico:
         r'\bint\b'
         return t
 
+    def t_PROGRAMA(self, t):
+        r'\bprograma\b'
+        return t
+
+    def t_READ(self, t):
+        r'\bread\b'
+        return t
+
+    def t_PRINTF(self, t):
+        r'\bprintf\b'
+        return t
+
+    def t_END(self, t):
+        r'\bend\b'
+        return t
+
     def t_newline(self, t):
         r'\n+'
         t.lexer.lineno += len(t.value)
@@ -83,10 +101,13 @@ class AnalizadorLexico:
             if not tok:
                 break
             if tok.type in self._reservada:
-                self._resultado_lexema.append((f"Reservada {tok.type.capitalize()}", tok.value, tok.lineno))
-                self.rc += 1
+                self._resultado_lexema.append((tok.value, "X", ""))
+
+            if tok.type == 'ID':
+                self._resultado_lexema.append((tok.value, "", "x"))
+
             else:
-                self._resultado_lexema.append((f"{tok.type.capitalize()}", tok.value, tok.lineno))
+                self._resultado_lexema.append((tok.value, "", ""))
         
         return self._resultado_lexema
 
@@ -94,8 +115,7 @@ class AnalizadorLexico:
 class AnalizadorSintactico:
     def __init__(self, analizador_lexico):
         self.analizador_lexico = analizador_lexico
-        self.lexres = None
-        self.reserv_c = analizador_lexico.rc
+        self.resultado_lexema = None
         self.tokens = analizador_lexico.tokens 
         self.parser = yacc.yacc(module=self)
         self.errormsg = []
@@ -176,6 +196,5 @@ class AnalizadorSintactico:
         
     def analizar(self, data):
         self.parser.parse(data, lexer=self.analizador_lexico.lexer)
-        self.lexres = self.analizador_lexico.analizar(data)
-        self.reserv_c = self.analizador_lexico.rc
+        self.resultado_lexema = self.analizador_lexico.analizar(data)
         return self.errormsg 
