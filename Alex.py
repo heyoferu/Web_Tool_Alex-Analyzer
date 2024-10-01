@@ -102,13 +102,14 @@ class AnalizadorLexico:
             tok = analizador.token()
             if not tok:
                 break
+
             if tok.type in self._reservada:
                 self._resultado_lexema.append((tok.value, "X", ""))
 
             if tok.type == 'ID':
                 self._resultado_lexema.append((tok.value, "", "x"))
 
-            else:
+            if tok.type != 'ID' and tok.type not in self._reservada:
                 self._resultado_lexema.append((tok.value, "", ""))
         
         return self._resultado_lexema
