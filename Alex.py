@@ -125,15 +125,25 @@ class AnalizadorSintactico:
 
     ### program grammar
     ### program statement
+    ### programa def() {code}
     def p_programa_statement(self, p):
         '''programa : PROGRAMA def L_PAR R_PAR L_BRACKET code R_BRACKET'''
-
+    
+    ### producción def : acepta 'suma', o cualquier otro identificador
     def p_def(self, p):
         '''def : ID '''
 
+    ### producción code : acepta una producción de expr 
     def p_code(self, p):
         '''code : expr'''
-    
+
+    ### producción expr : acepta cualquier expresión de las siguienes:
+    #### 1. int a, b, c, ... z ó sólo un identificador
+    #### 2. read a; ó cualquier otro identificador
+    #### 3. a = b+c
+    #### 4. print("")
+    #### 5: end
+    #### La ultima producción es recursiva, se llama así misma en caso de que sean uno o más expresiones
     def p_expr(self, p):
         '''expr : INT ids SEMICOLON
                 | READ ID SEMICOLON 
@@ -142,12 +152,14 @@ class AnalizadorSintactico:
                 | END SEMICOLON
                 | expr expr'''
 
+    ### producción op : acepta la sintaxis id = id + id; ejemplo c=a+b;
     def p_op(self, p):
         '''op : ID ASSIGN ID PLUS ID SEMICOLON'''
 
+    ### producción ids: acepta multiples identificadores separados por comas, es decir i, i, i o sólo i
     def p_ids(self, p):
         '''ids : ID 
-               | ids COMMA ids'''    
+               | ids COMMA ids'''    ### recursividad
                
     def p_error(self, p):
         if p:
