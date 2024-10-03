@@ -41,12 +41,16 @@
                         <th>Token</th>
                         <th>Reservada</th>
                         <th>Identificador</th>
+                        <th>Tipo</th>
+                        <th>Linea</th>
                     </tr>
-                    {% for caracter, simbolo, linea in tokens %}
+                    {% for Token, PR, ID, type, lineno in tokens %}
                     <tr>
-                        <td>{{ caracter }}</td>
-                        <td>{{ simbolo }}</td>
-                        <td>{{ linea }}</td>
+                        <td>{{ Token }}</td>
+                        <td>{{ PR }}</td>
+                        <td>{{ ID }}</td>
+                        <td>{{ type }}</td>
+                        <td>{{ lineno }}</td>
                     </tr>
                     {% endfor %}
                 {% else %}
