@@ -33,6 +33,7 @@ class AnalizadorLexico:
     def __init__(self):
         self._resultado_lexema = []
         self.lexer = lex.lex(module=self)
+        self.rc = 0
 
     t_L_PAR = r'\('
     t_R_PAR = r'\)'
@@ -105,6 +106,7 @@ class AnalizadorLexico:
 
             if tok.type in self._reservada:
                 self._resultado_lexema.append((tok.value, "X", "", tok.type, tok.lineno))
+                self.rc += 1
 
             if tok.type == 'ID':
                 self._resultado_lexema.append((tok.value, "", "x", tok.type, tok.lineno))
@@ -122,6 +124,7 @@ class AnalizadorSintactico:
         self.tokens = analizador_lexico.tokens 
         self.parser = yacc.yacc(module=self)
         self.errormsg = []
+        self.resultado_lexema_c = 0
 
     ### program grammar
     ### program statement
@@ -170,4 +173,5 @@ class AnalizadorSintactico:
     def analizar(self, data):
         self.parser.parse(data, lexer=self.analizador_lexico.lexer)
         self.resultado_lexema = self.analizador_lexico.analizar(data)
+        self.resultado_lexema_c = self.analizador_lexico.rc
         return self.errormsg 

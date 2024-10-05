@@ -12,7 +12,7 @@ def index():
         asena = Alex.AnalizadorSintactico(analizador)
         sintaxis = asena.analizar(code)
 
-        return render_template('index.html', tokens=asena.resultado_lexema, input=code, error_sena = sintaxis)
+        return render_template('index.html', tokens=asena.resultado_lexema, tkeys = asena.resultado_lexema_c, input=code, error_sena = sintaxis)
     
     return render_template('index.html', tokens=None, error_sena = None)
 
