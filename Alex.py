@@ -124,6 +124,7 @@ class AnalizadorSintactico:
         self.tokens = analizador_lexico.tokens 
         self.parser = yacc.yacc(module=self)
         self.errormsg = []
+        self.__vars = []
         self.resultado_lexema_c = 0
 
     ### program grammar
@@ -154,16 +155,34 @@ class AnalizadorSintactico:
                 | PRINTF L_PAR STRING R_PAR
                 | END SEMICOLON
                 | expr expr'''
+    ## statement read
+    def p_read(self, p):
+        '''read : READ ID SEMICOLON'''
+        if p[2] not in self.__vars:
+            self.errormsg.append(f"Error de sintaxis. Variable no definida: '{p[2]}'")
+        else:
+            pass
+
 
     ### producción op : acepta la sintaxis id = id + id; ejemplo c=a+b;
     def p_op(self, p):
         '''op : ID ASSIGN ID PLUS ID SEMICOLON'''
+        if p[1] not in self.__vars:
+            self.errormsg.append(f"Error de sintaxis. Variable no definida: '{p[1]}' ")
+        if p[3] not in self.__vars:
+            self.errormsg.append(f"Error de sintaxis. Variable no definida: '{p[3]}' ")
+        if p[5] not in self.__vars:
+            self.errormsg.append(f"Error de sintaxis. Variable no definida: '{p[5]}' ")
+        else:
+            pass
+    
 
     ### producción ids: acepta multiples identificadores separados por comas, es decir i, i, i o sólo i
     def p_ids(self, p):
         '''ids : ID 
                | ids COMMA ids'''    ### recursividad
-               
+        self.__vars.append(p[1])
+        
     def p_error(self, p):
         if p:
             self.errormsg.append(f"Error en la linea {p.lineno} y posición {p.lexpos}. Carácter no valido: {p.value}")
