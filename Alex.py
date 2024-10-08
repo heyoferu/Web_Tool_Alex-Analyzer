@@ -4,31 +4,30 @@ import ply.yacc as yacc
 class AnalizadorLexico:
     # Tokens reservados
     _reservada = (
-        'FOR',
+        'INCLUDE',
+        'IOSTREAM',
+        'NAMESPACE',
         'INT',
-        'SYSTEM',
-        'OUT',
-        'PRINTLN',
-        'PROGRAMA',
-        'READ',
-        'PRINTF',
-        'END'
+        'RETURN',
+        'COUT',
+        'STD',
+        'MAIN',
+        'USING'
         )
     tokens = _reservada + (
-        'ID', 
-        'PLUS',
+        'ID',
         'L_PAR',
         'R_PAR', 
         'L_BRACKET',
         'R_BRACKET',
         'NUMBER', 
-        'DOT',
         'STRING', 
         'SEMICOLON', 
-        'ASSIGN', 
+        'IN',
+        'HASH',
         'LESSTHAN',
-        'COMMA'
-    )
+        'GREATERTHAN'    
+)
 
     def __init__(self):
         self._resultado_lexema = []
@@ -39,50 +38,51 @@ class AnalizadorLexico:
     t_R_PAR = r'\)'
     t_L_BRACKET = r'\{'
     t_R_BRACKET = r'\}'
-    t_DOT = r'\.'
-    t_PLUS = r'\+'
-    t_ASSIGN = r'='
-    t_LESSTHAN = r'<='
     t_SEMICOLON = r';'
     t_STRING = r'\".*?\"'
     t_ID = r'[a-zA-Z_][a-zA-Z_0-9]*'
     t_NUMBER = r'\d+'
-    t_COMMA = r'\,'
+    t_HASH = r'\#'
+    t_LESSTHAN = r'\<'
+    t_GREATERTHAN = r'\>'
+    t_IN = r'\<\<'
 
-    def t_FOR(self, t):
-        r'for'
+
+    def t_INCLUDE(self, t):
+        r'include'
+        return t
+    
+
+    def t_IOSTREAM(self, t):
+        r'iostream'
+        return t
+    
+    def t_NAMESPACE(self, t):
+        r'namespace'
+        return t
+    
+    def t_RETURN(self, t):
+        r'return'
+        return t
+    
+    def t_COUT(self, t):
+        r'cout'
         return t
 
-    def t_SYSTEM(self, t):
-        r'\bSystem\b'
+    def t_STD(self, t):
+        r'std'
         return t
 
-    def t_OUT(self, t):
-        r'\bout\b'
-        return t
-
-    def t_PRINTLN(self, t):
-        r'\bprintln\b'
+    def t_MAIN(self, t):
+        r'main'
         return t
 
     def t_INT(self, t):
         r'\bint\b'
         return t
 
-    def t_PROGRAMA(self, t):
-        r'\bprograma\b'
-        return t
-
-    def t_READ(self, t):
-        r'\bread\b'
-        return t
-
-    def t_PRINTF(self, t):
-        r'\bprintf\b'
-        return t
-
-    def t_END(self, t):
-        r'\bend\b'
+    def t_USING(self, t):
+        r'using'
         return t
 
     def t_newline(self, t):
@@ -110,9 +110,12 @@ class AnalizadorLexico:
 
             if tok.type == 'ID':
                 self._resultado_lexema.append((tok.value, "", "x", tok.type, tok.lineno))
+                self.rc += 1
 
             if tok.type != 'ID' and tok.type not in self._reservada:
                 self._resultado_lexema.append((tok.value, "", "", tok.type, tok.lineno))
+                self.rc += 1
+
         
         return self._resultado_lexema
 
@@ -127,62 +130,32 @@ class AnalizadorSintactico:
         self.__vars = []
         self.resultado_lexema_c = 0
 
-    ### program grammar
-    ### program statement
-    ### programa def() {code}
-    def p_programa_statement(self, p):
-        '''programa : PROGRAMA def L_PAR R_PAR L_BRACKET code R_BRACKET'''
-    
-    ### producción def : acepta 'suma', o cualquier otro identificador
-    def p_def(self, p):
-        '''def : ID '''
+    def p_statement(self, p):
+        '''statement : imports ns INT MAIN L_PAR R_PAR L_BRACKET code R_BRACKET'''
 
-    ### producción code : acepta una producción de expr 
+    def p_statement_error(self, p):
+        '''statement : imports error INT MAIN L_PAR R_PAR L_BRACKET code R_BRACKET'''
+        self.errormsg.append("Error en el namespace.")
+
+    def p_statement_error_2(self, p):
+        '''statement : error ns INT MAIN L_PAR R_PAR L_BRACKET code R_BRACKET'''
+        self.errormsg.append("Error en la importación.")
+
+    def p_statement_error_3(self, p):
+        '''statement : imports ns INT MAIN L_PAR R_PAR L_BRACKET error R_BRACKET'''
+        self.errormsg.append("Expresiones de código no válidas.")
+
+    def p_imports(self, p):
+        '''imports : HASH INCLUDE LESSTHAN IOSTREAM GREATERTHAN'''
+
+    def p_ns(self, p):
+        '''ns : USING NAMESPACE STD SEMICOLON'''
+    
     def p_code(self, p):
-        '''code : expr'''
-
-    ### producción expr : acepta cualquier expresión de las siguienes:
-    #### 1. int a, b, c, ... z ó sólo un identificador
-    #### 2. read a; ó cualquier otro identificador
-    #### 3. a = b+c
-    #### 4. print("")
-    #### 5: end
-    #### La ultima producción es recursiva, se llama así misma en caso de que sean uno o más expresiones
-    def p_expr(self, p):
-        '''expr : INT ids SEMICOLON
-                | READ ID SEMICOLON 
-                | op
-                | PRINTF L_PAR STRING R_PAR
-                | END SEMICOLON
-                | expr expr'''
-    ## statement read
-    def p_read(self, p):
-        '''read : READ ID SEMICOLON'''
-        if p[2] not in self.__vars:
-            self.errormsg.append(f"Error de sintaxis. Variable no definida: '{p[2]}'")
-        else:
-            pass
-
-
-    ### producción op : acepta la sintaxis id = id + id; ejemplo c=a+b;
-    def p_op(self, p):
-        '''op : ID ASSIGN ID PLUS ID SEMICOLON'''
-        if p[1] not in self.__vars:
-            self.errormsg.append(f"Error de sintaxis. Variable no definida: '{p[1]}' ")
-        if p[3] not in self.__vars:
-            self.errormsg.append(f"Error de sintaxis. Variable no definida: '{p[3]}' ")
-        if p[5] not in self.__vars:
-            self.errormsg.append(f"Error de sintaxis. Variable no definida: '{p[5]}' ")
-        else:
-            pass
+        '''code : COUT IN STRING SEMICOLON
+                | RETURN NUMBER SEMICOLON
+                | code code'''
     
-
-    ### producción ids: acepta multiples identificadores separados por comas, es decir i, i, i o sólo i
-    def p_ids(self, p):
-        '''ids : ID 
-               | ids COMMA ids'''    ### recursividad
-        self.__vars.append(p[1])
-        
     def p_error(self, p):
         if p:
             self.errormsg.append(f"Error en la linea {p.lineno} y posición {p.lexpos}. Carácter no valido: {p.value}")
@@ -194,3 +167,16 @@ class AnalizadorSintactico:
         self.resultado_lexema = self.analizador_lexico.analizar(data)
         self.resultado_lexema_c = self.analizador_lexico.rc
         return self.errormsg 
+
+
+
+
+""""
+#include <iostream>
+using namespace std;
+int main() {
+    cout << "Hello, World!";
+    return 0;
+}
+
+"""
